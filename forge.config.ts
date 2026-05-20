@@ -90,6 +90,18 @@ const config: ForgeConfig = {
         }
       }
 
+      // ssh2 is marked external in vite.main.config.ts (native C++ addon for
+      // crypto). Without copying it the app throws "Cannot find module 'ssh2'"
+      // at runtime when opening any SSH connection.
+      const ssh2Deps = ['ssh2', 'asn1', 'bcrypt-pbkdf', 'cpu-features'];
+      for (const dep of ssh2Deps) {
+        const depSrc = path.join(__dirname, 'node_modules', dep);
+        const depDest = path.join(appDir, 'node_modules', dep);
+        if (fs.existsSync(depSrc) && !fs.existsSync(depDest)) {
+          await fs.copy(depSrc, depDest);
+        }
+      }
+
       // Copy the assets folder (icons, clawpilot.png, etc.) into the
       // packaged app. Main-process code resolves these via app.getAppPath()
       // + assets/<name> for notification icons and similar runtime assets.
@@ -104,13 +116,13 @@ const config: ForgeConfig = {
   },
   packagerConfig: {
     asar: false,
-    name: "tmax",
-    executableName: "tmax",
+    name: "ssh-tmux-tmax",
+    executableName: "ssh-tmux-tmax",
     icon: "./assets/icon",
   },
   makers: [
     // Windows
-    new MakerSquirrel({ authors: "tmax", description: "Powerful multi-terminal app", setupIcon: "./assets/icon.ico", iconUrl: "https://raw.githubusercontent.com/InbarR/tmax/main/assets/icon.ico" }),
+    new MakerSquirrel({ name: "ssh-tmux-tmax", authors: "catowabisabi", description: "SSH Tmux Tmax - Remote tmux session manager", setupIcon: "./assets/icon.ico", iconUrl: "https://raw.githubusercontent.com/InbarR/tmax/main/assets/icon.ico" }),
     // macOS
     new MakerDMG({ format: "ULFO" }),
     // Linux

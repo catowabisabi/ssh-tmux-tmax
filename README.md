@@ -4,11 +4,11 @@
 
 <h1 align="center">Tmux Control Center</h1>
 
-<p align="center">A cross-platform terminal manager with SSH remote tmux session management — connect to your servers, attach to tmux sessions, and manage multiple terminals in one window.</p>
+<p align="center">A cross-platform desktop terminal manager with SSH remote tmux session management — connect to your servers, discover live sessions, and manage multiple terminals in one window.</p>
 
-![Windows](https://img.shields.io/badge/Windows-0078D6?logo=windows&logoColor=white) ![macOS](https://img.shields.io/badge/macOS-000000?logo=apple&logoColor=white) ![Linux](https://img.shields.io/badge/Linux-FCC624?logo=linux&logoColor=black) ![Electron](https://img.shields.io/badge/Electron-30-47848F) ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6)
+![Windows](https://img.shields.io/badge/Windows-0078D6?logo=windows&logoColor=white) ![macOS](https://img.shields.io/badge/macOS-000000?logo=apple&logoColor=white) ![Linux](https://img.shields.io/badge/Linux-FCC624?logo=linux&logoColor=black) ![Electron](https://img.shields.io/badge/Electron-30-47848F) ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6) ![React](https://img.shields.io/badge/React-18-61DAFB)
 
-> **Built on top of [tmax](https://github.com/InbarR/tmax)** — extended with SSH connectivity and remote tmux session management.
+> **Built on top of [tmax](https://github.com/InbarR/tmax)** — extended with SSH connectivity, remote tmux session management, and live session discovery.
 
 ---
 
@@ -18,6 +18,7 @@ Tmux Control Center started as a fork of [tmax](https://github.com/InbarR/tmax),
 
 - Save and manage SSH host credentials (password or private key)
 - Define named tmux sessions per host
+- **Auto-discover all live tmux sessions** running on a remote host with one click
 - Connect with one click — the app SSHes in and automatically attaches to the tmux session
 - Work in the same tiling terminal UI you're already in, with a blue `SSH` badge marking remote panes
 
@@ -31,7 +32,8 @@ If you work with remote Linux servers and use tmux, this is for you.
 
 - **SSH Panel** — open with the `🔗 SSH` button in the status bar, or via Command Palette
 - Add hosts with name, IP/hostname, port, username, and password or SSH key path
-- Define tmux sessions per host (with optional project path)
+- Define named tmux sessions per host (with optional project path)
+- **🔍 Live Session Scanner** — scans all running tmux sessions on the remote host and shows their current working directories. Save any discovered session to your list or connect directly
 - One-click connect — SSHes in and runs `tmux attach-session` automatically
 - Remote panes show a blue `SSH` badge in the title bar
 - Credentials stored locally in a SQLite database
@@ -86,16 +88,17 @@ If you work with remote Linux servers and use tmux, this is for you.
 ### Install & Run
 
 ```bash
-git clone https://github.com/catowabisabi/tmux-control-center.git
-cd tmux-control-center
+git clone https://github.com/catowabisabi/ssh-tmux-tmax.git
+cd ssh-tmux-tmax
 npm install
 npm start
 ```
 
-### Build
+### Build Installer
 
 ```bash
 npm run build
+# Output: out/make/ (Squirrel .exe on Windows, .dmg on macOS, .deb on Linux)
 ```
 
 ---
@@ -104,9 +107,17 @@ npm run build
 
 1. Click the **🔗 SSH** button in the bottom status bar (or open Command Palette → "SSH 連線面板")
 2. Click **＋** to add a host — enter the hostname, port, username, and either a password or path to your private key
-3. Click the host name to see its tmux sessions, then click **＋** to add a session name
+3. Click the host name to see its tmux sessions, then click **＋** to add a named session
 4. Click **連線** — the app will SSH in and attach to the tmux session automatically
 5. The terminal pane opens with a blue `SSH` badge in the title bar
+
+## How to Use Live Session Scanner
+
+1. Open the SSH Panel and select a host
+2. Click the **🔍** button next to the session list header
+3. The app opens a temporary SSH connection and runs `tmux list-panes -a` on the remote host
+4. All live sessions appear with their name, attached status, window count, and current working directory
+5. Click **＋存** to save a session to your named list, or **連線** to connect immediately
 
 ---
 
@@ -118,7 +129,7 @@ src/
     main.ts                 Window creation, IPC handlers
     pty-manager.ts          Local PTY lifecycle (node-pty)
     ssh-manager.ts          SSH connections (ssh2)
-    tmux-service.ts         Remote tmux commands over SSH
+    tmux-service.ts         Remote tmux commands + live session discovery
     db.ts                   SQLite database (hosts, tmux sessions)
     credential-store.ts     Encrypted credential storage
     config-store.ts         App config persistence
@@ -131,6 +142,16 @@ src/
     hooks/          Keybindings, drag & drop
     styles/         Global CSS
   shared/         IPC channel constants, shared types
+```
+
+**Key IPC flows for SSH:**
+
+```
+Renderer → preload.tmuxScanLive(hostId)
+  → IPC TMUX_SCAN_LIVE
+    → main: temp ssh2 Client → TmuxService.listLiveSessions()
+      → tmux list-panes -a → parse → return TmuxLiveSession[]
+  → Renderer displays live session list
 ```
 
 ---
