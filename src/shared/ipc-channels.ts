@@ -87,6 +87,19 @@ export const IPC = {
   KEYBINDINGS_OPEN_FILE: 'keybindings:openFile',
   KEYBINDINGS_RESET: 'keybindings:reset',
   KEYBINDINGS_CHANGED: 'keybindings:changed',
+  // ── SSH / Tmux Session Management ─────────────────────────────────
+  SSH_CREATE: 'ssh:create',
+  SSH_READY: 'ssh:ready',
+  SSH_ERROR: 'ssh:error',
+  TMUX_LIST: 'tmux:list',
+  TMUX_CREATE: 'tmux:create',
+  TMUX_DELETE: 'tmux:delete',
+  TMUX_RENAME: 'tmux:rename',
+  HOSTS_GET: 'hosts:get',
+  HOST_GET: 'host:get',
+  HOST_CREATE: 'host:create',
+  HOST_UPDATE: 'host:update',
+  HOST_DELETE: 'host:delete',
 } as const;
 
 export type IpcChannel = (typeof IPC)[keyof typeof IPC];

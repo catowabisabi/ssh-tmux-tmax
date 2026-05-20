@@ -74,6 +74,7 @@ const CommandPalette: React.FC = () => {
         }});
       }},
       { id: 'copilotSessions', label: 'Copilot Sessions Panel', shortcut: 'Ctrl+Shift+C', action: () => store().toggleCopilotPanel() },
+      { id: 'sshPanel', label: 'SSH 連線面板', action: () => store().toggleSshPanel() },
       { id: 'worktreePanel', label: 'Git Worktree Panel', action: () => store().toggleWorktreePanel() },
       { id: 'dirPicker', label: 'Go to Directory (Favorites & Recent)', shortcut: 'Ctrl+Shift+D', action: () => store().toggleDirPicker() },
       { id: 'colorizeAllTabs', label: 'Toggle Tab Colors', shortcut: 'Ctrl+Shift+O', action: () => store().colorizeAllTabs() },

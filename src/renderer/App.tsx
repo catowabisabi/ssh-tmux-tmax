@@ -24,6 +24,7 @@ import Settings from './components/Settings';
 import CommandPalette from './components/CommandPalette';
 import DirPanel from './components/DirPanel';
 import CopilotPanel from './components/CopilotPanel';
+import SshPanel from './components/SshPanel';
 import WorktreePanel from './components/WorktreePanel';
 import DiffReview from './components/DiffReview';
 import FileExplorer from './components/FileExplorer';
@@ -300,6 +301,7 @@ const App: React.FC = () => {
           <div className="main-area">
             <DirPanel />
             <CopilotPanel />
+            <SshPanel />
             <WorktreePanel />
             <FileExplorer />
             <div className="layout-area">

@@ -735,6 +735,7 @@ interface TerminalStore {
   tabMenuTerminalId: TerminalId | null;
   autoColorTabs: boolean;
   showCopilotPanel: boolean;
+  showSshPanel: boolean;
   // Counter that bumps when something explicitly asks the AI Sessions
   // panel to re-evaluate its highlighted session - lets the panel re-run
   // its auto-highlight effect even when focusedTerminalId hasn't changed
@@ -789,6 +790,7 @@ interface TerminalStore {
   // Actions
   loadConfig: () => Promise<void>;
   createTerminal: (shellProfileId?: string, cwdOverride?: string) => Promise<void>;
+  createSshTerminal: (opts: { hostId: number; sessionName: string; hostName: string }) => Promise<void>;
   closeTerminal: (id: TerminalId) => Promise<void>;
   replaceTerminal: (id: TerminalId, shellProfileId?: string) => Promise<void>;
   /**
@@ -937,6 +939,7 @@ interface TerminalStore {
    */
   movePaneToWorkspace: (terminalId: TerminalId, destWorkspaceId: WorkspaceId) => void;
   toggleCopilotPanel: () => void;
+  toggleSshPanel: () => void;
   // Open the AI Sessions panel and ask it to highlight the session
   // linked to this pane. Sets focus to the pane (so the panel reads the
   // right aiSessionId) and bumps aiSessionHighlightRequest. If the
@@ -1107,6 +1110,7 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
   worktreeLoading: false,
   autoColorTabs: true,
   showCopilotPanel: false,
+  showSshPanel: false,
   aiSessionHighlightRequest: 0,
   promptsDialogRequest: null,
   sessionSummaryRequest: null,
@@ -1269,6 +1273,79 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
       terminals: newTerminals,
       layout: { ...layout, tilingRoot: newRoot },
       focusedTerminalId: id,
+      nextZIndex,
+      preGridRoot: newPreGridRoot,
+    });
+  },
+
+  createSshTerminal: async ({ hostId, sessionName, hostName }) => {
+    const { terminals, layout, nextZIndex } = get();
+
+    // Establish SSH connection; returns the session ID (e.g. "1-mysession")
+    const { id: sshId } = await window.terminalAPI.sshCreate({
+      hostId,
+      sessionName,
+      cols: 80,
+      rows: 24,
+    });
+
+    // When SSH shell is ready, attach to the tmux session
+    const unsub = window.terminalAPI.onSshReady((readyId: string) => {
+      if (readyId === sshId) {
+        unsub();
+        // Attach to existing tmux session, or create a new one if it doesn't exist
+        window.terminalAPI.sshWrite(
+          sshId,
+          `tmux attach-session -d -t "${sessionName}" 2>/dev/null || tmux new-session -s "${sessionName}"\r`,
+        );
+      }
+    });
+
+    const title = `${sessionName} @ ${hostName}`;
+    const instance: TerminalInstance = {
+      id: sshId,
+      title,
+      customTitle: true,
+      shellProfileId: '__ssh__',
+      cwd: '~',
+      mode: 'tiled',
+      pid: 0,
+      lastProcess: '',
+      startupCommand: '',
+      workspaceId: get().activeWorkspaceId,
+      isSSH: true,
+      sshHostName: hostName,
+    };
+
+    const newTerminals = new Map(terminals);
+    newTerminals.set(sshId, instance);
+
+    const newLeaf: LayoutLeafNode = { kind: 'leaf', terminalId: sshId };
+    let newRoot: LayoutNode;
+
+    if (layout.tilingRoot === null) {
+      newRoot = newLeaf;
+    } else {
+      const leafOrder = getLeafOrder(layout.tilingRoot);
+      const lastId = leafOrder[leafOrder.length - 1];
+      newRoot = insertLeaf(layout.tilingRoot, lastId, sshId, 'right');
+    }
+
+    const { viewMode, preGridRoot, gridColumns } = get();
+    let newPreGridRoot = preGridRoot;
+    if (viewMode === 'grid') {
+      if (preGridRoot) {
+        const preOrder = getLeafOrder(preGridRoot);
+        newPreGridRoot = insertLeaf(preGridRoot, preOrder[preOrder.length - 1], sshId, 'right');
+      }
+      const allIds = getLeafOrder(newRoot);
+      newRoot = buildGridTree(allIds, gridColumns || undefined) || newRoot;
+    }
+
+    set({
+      terminals: newTerminals,
+      layout: { ...layout, tilingRoot: newRoot },
+      focusedTerminalId: sshId,
       nextZIndex,
       preGridRoot: newPreGridRoot,
     });
@@ -3794,6 +3871,10 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
 
   toggleCopilotPanel: () => {
     set((s) => ({ showCopilotPanel: !s.showCopilotPanel }));
+  },
+
+  toggleSshPanel: () => {
+    set((s) => ({ showSshPanel: !s.showSshPanel }));
   },
 
   loadCopilotSessions: async () => {

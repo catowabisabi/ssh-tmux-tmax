@@ -36,3 +36,5 @@ excalidraw.log
 *.ab
 wa_key.bin
 nul
+
+tmux-viewer/

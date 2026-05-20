@@ -4,6 +4,9 @@ import os from 'node:os';
 import path from 'node:path';
 import Store from 'electron-store';
 import { PtyManager } from './pty-manager';
+import { SshManager } from './ssh-manager';
+import { initDb, getHosts, getTmuxSessions, createHost, updateHost, deleteHost, createTmuxSession, updateTmuxSession, deleteTmuxSession } from './db';
+import { encryptPassword, decryptPassword } from './credential-store';
 import { ConfigStore, defaultConfig } from './config-store';
 import type { BackgroundMaterial, Keybinding } from './config-store';
 import { KeybindingsFile } from './keybindings-file';
@@ -129,6 +132,7 @@ function applyMaterialToWindow(win: BrowserWindow): void {
 
 let mainWindow: BrowserWindow | null = null;
 let ptyManager: PtyManager | null = null;
+let sshManager: SshManager | null = null;
 let configStore: ConfigStore | null = null;
 let keybindingsFile: KeybindingsFile | null = null;
 let copilotMonitor: CopilotSessionMonitor | null = null;
@@ -418,6 +422,35 @@ function setupPtyManager(): void {
   });
 }
 
+function setupSshManager(): void {
+  sshManager = new SshManager({
+    onData(id: string, data: string) {
+      mainWindow?.webContents.send(IPC.PTY_DATA, id, data);
+      for (const win of detachedWindows.values()) {
+        if (!win.isDestroyed()) win.webContents.send(IPC.PTY_DATA, id, data);
+      }
+    },
+    onExit(id: string, exitCode: number | undefined) {
+      mainWindow?.webContents.send(IPC.PTY_EXIT, id, exitCode);
+      for (const win of detachedWindows.values()) {
+        if (!win.isDestroyed()) win.webContents.send(IPC.PTY_EXIT, id, exitCode);
+      }
+    },
+    onReady(id: string) {
+      mainWindow?.webContents.send(IPC.SSH_READY, id);
+      for (const win of detachedWindows.values()) {
+        if (!win.isDestroyed()) win.webContents.send(IPC.SSH_READY, id);
+      }
+    },
+    onError(id: string, err: Error) {
+      mainWindow?.webContents.send(IPC.SSH_ERROR, id, err.message);
+      for (const win of detachedWindows.values()) {
+        if (!win.isDestroyed()) win.webContents.send(IPC.SSH_ERROR, id, err.message);
+      }
+    },
+  });
+}
+
 function setupConfigStore(): void {
   configStore = new ConfigStore();
   // TASK-64: propagate the AI-session-notifications opt-out to the
@@ -595,21 +628,6 @@ function registerIpcHandlers(): void {
     }
   );
 
-  ipcMain.handle(
-    IPC.PTY_RESIZE,
-    (_event, id: string, cols: number, rows: number) => {
-      ptyManager!.resize(id, cols, rows);
-    }
-  );
-
-  ipcMain.handle(IPC.PTY_KILL, (_event, id: string) => {
-    ptyManager!.kill(id);
-  });
-
-  ipcMain.on(IPC.PTY_WRITE, (_event, id: string, data: string) => {
-    ptyManager!.write(id, data);
-  });
-
   ipcMain.handle(IPC.PTY_GET_DIAG, (_event, id: string) => {
     return ptyManager?.getStats(id) ?? null;
   });
@@ -618,6 +636,154 @@ function registerIpcHandlers(): void {
     const pid = ptyManager?.getPid(id);
     if (typeof pid !== 'number') return [];
     return await getDescendantNames(pid);
+  });
+
+  // ── SSH Connection (for remote tmux) ─────────────────────────────────────
+  ipcMain.handle(IPC.SSH_CREATE, async (_event, opts: {
+    hostId: number;
+    sessionName: string;
+    cols: number;
+    rows: number;
+  }) => {
+    const hosts = getHosts();
+    const host = hosts.find(h => h.id === opts.hostId);
+    if (!host) throw new Error(`Host not found: ${opts.hostId}`);
+
+    const sessions = getTmuxSessions(opts.hostId);
+    const session = sessions.find(s => s.name === opts.sessionName);
+    if (!session) throw new Error(`Session not found: ${opts.sessionName}`);
+
+    // Decrypt password if needed
+    let password: string | undefined;
+    if (host.password_encrypted) {
+      password = decryptPassword(host.password_encrypted);
+    }
+
+    const sessionId = `${opts.hostId}-${opts.sessionName}`;
+
+    sshManager!.connect({
+      id: sessionId,
+      host: host.host,
+      port: host.port,
+      username: host.username,
+      password,
+    });
+
+    return { id: sessionId };
+  });
+
+  ipcMain.handle(IPC.PTY_RESIZE, (_event, id: string, cols: number, rows: number) => {
+    // Try SSH first (remote), then PTY (local)
+    if (sshManager?.isConnected(id)) {
+      sshManager.resize(id, cols, rows);
+    } else {
+      ptyManager?.resize(id, cols, rows);
+    }
+  });
+
+  ipcMain.handle(IPC.PTY_KILL, (_event, id: string) => {
+    if (sshManager?.isConnected(id)) {
+      sshManager.disconnect(id);
+    } else {
+      ptyManager?.kill(id);
+    }
+  });
+
+  ipcMain.on(IPC.PTY_WRITE, (_event, id: string, data: string) => {
+    if (sshManager?.isConnected(id)) {
+      sshManager.write(id, data);
+    } else {
+      ptyManager?.write(id, data);
+    }
+  });
+
+  // ── Host Management ──────────────────────────────────────────────────────
+  ipcMain.handle(IPC.HOSTS_GET, () => {
+    return getHosts();
+  });
+
+  ipcMain.handle(IPC.HOST_CREATE, async (_event, data: {
+    name: string;
+    host: string;
+    port: number;
+    username: string;
+    password?: string;
+    authType: 'password' | 'key';
+    privateKeyPath?: string;
+  }) => {
+    let passwordEncrypted: string | null = null;
+    if (data.password && data.authType === 'password') {
+      passwordEncrypted = encryptPassword(data.password);
+    }
+    const id = createHost({
+      name: data.name,
+      host: data.host,
+      port: data.port,
+      username: data.username,
+      auth_type: data.authType,
+      password_encrypted: passwordEncrypted,
+      private_key_path: data.privateKeyPath ?? null,
+    });
+    return { id };
+  });
+
+  ipcMain.handle(IPC.HOST_UPDATE, async (_event, id: number, data: {
+    name?: string;
+    host?: string;
+    port?: number;
+    username?: string;
+    password?: string;
+    authType?: 'password' | 'key';
+    privateKeyPath?: string;
+  }) => {
+    const updateData: Record<string, unknown> = { ...data };
+    if (data.password) {
+      updateData.password_encrypted = encryptPassword(data.password);
+      delete updateData.password;
+    }
+    if (data.authType) {
+      updateData.auth_type = data.authType;
+      delete updateData.authType;
+    }
+    if (data.privateKeyPath !== undefined) {
+      updateData.private_key_path = data.privateKeyPath;
+    }
+    updateHost(id, updateData as any);
+  });
+
+  ipcMain.handle(IPC.HOST_DELETE, async (_event, id: number) => {
+    deleteHost(id);
+  });
+
+  // ── Tmux Session Management ─────────────────────────────────────────────
+  ipcMain.handle(IPC.TMUX_LIST, (_event, hostId: number) => {
+    return getTmuxSessions(hostId);
+  });
+
+  ipcMain.handle(IPC.TMUX_CREATE, async (_event, data: {
+    hostId: number;
+    name: string;
+    projectPath?: string;
+    autoAttach?: boolean;
+    autoDetachExisting?: boolean;
+  }) => {
+    const id = createTmuxSession({
+      host_id: data.hostId,
+      name: data.name,
+      project_path: data.projectPath ?? null,
+      start_command: null,
+      auto_attach: data.autoAttach ? 1 : 0,
+      auto_detach_existing: data.autoDetachExisting ? 1 : 0,
+    });
+    return { id };
+  });
+
+  ipcMain.handle(IPC.TMUX_DELETE, async (_event, id: number) => {
+    deleteTmuxSession(id);
+  });
+
+  ipcMain.handle(IPC.TMUX_RENAME, async (_event, id: number, newName: string) => {
+    updateTmuxSession(id, { name: newName });
   });
 
   ipcMain.on(IPC.DIAG_LOG, (_event, event: string, data?: Record<string, unknown>) => {
@@ -1431,6 +1597,10 @@ app.whenReady().then(() => {
       };
     }
     setupKeybindingsFile();
+    initDb();
+    console.log('Database initialized');
+    setupSshManager();
+    console.log('SSH manager ready');
     setupPtyManager();
     console.log('PTY manager ready');
     setupCopilotMonitor();

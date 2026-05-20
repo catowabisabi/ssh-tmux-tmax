@@ -76,8 +76,31 @@ export interface TerminalAPI {
   syncSessionNameOverrides(overrides: Record<string, string>): void;
   // ── Cross-window session-file change broadcast (TASK-163) ─────────
   onSessionFileChanged(cb: () => void): () => void;
+  // ── Session save/load ─────────────────────────────────────────────
+  saveSession(data: unknown): Promise<void>;
+  loadSession(): Promise<unknown>;
   // ── Child process tree query (TASK-171) ────────────────────────────
   getPtyChildProcesses(ptyId: string): Promise<string[]>;
+  // ── Shell path opening ─────────────────────────────────────────────
+  openPath(filePath: string): Promise<void>;
+  // ── Detached windows ──────────────────────────────────────────────
+  closeDetached(id: string): Promise<void>;
+  onDetachedClosed(cb: (id: string) => void): () => void;
+  // ── SSH / Tmux Session Management ─────────────────────────────────
+  sshCreate(opts: { hostId: number; sessionName: string; cols: number; rows: number }): Promise<{ id: string }>;
+  sshWrite(id: string, data: string): void;
+  sshResize(id: string, cols: number, rows: number): Promise<void>;
+  sshKill(id: string): Promise<void>;
+  onSshReady(cb: (id: string) => void): () => void;
+  onSshError(cb: (id: string, err: string) => void): () => void;
+  hostsGet(): Promise<{ id: number; name: string; host: string; port: number; username: string; auth_type: string; password_encrypted: string | null; private_key_path: string | null }[]>;
+  hostCreate(data: { name: string; host: string; port: number; username: string; password?: string; authType: 'password' | 'key'; privateKeyPath?: string }): Promise<{ id: number }>;
+  hostUpdate(id: number, data: { name?: string; host?: string; port?: number; username?: string; password?: string; authType?: 'password' | 'key'; privateKeyPath?: string }): Promise<void>;
+  hostDelete(id: number): Promise<void>;
+  tmuxList(hostId: number): Promise<{ id: number; host_id: number; name: string; project_path: string | null; start_command: string | null; auto_attach: number; auto_detach_existing: number }[]>;
+  tmuxCreate(data: { hostId: number; name: string; projectPath?: string; autoAttach?: boolean; autoDetachExisting?: boolean }): Promise<{ id: number }>;
+  tmuxDelete(id: number): Promise<void>;
+  tmuxRename(id: number, newName: string): Promise<void>;
 }
 
 const terminalAPI: TerminalAPI = {
@@ -187,6 +210,7 @@ const terminalAPI: TerminalAPI = {
     return ipcRenderer.invoke(IPC.SESSION_LOAD);
   },
 
+  // ── Detached windows ──────────────────────────────────────────────
   detachTerminal(id: string) {
     return ipcRenderer.invoke(IPC.DETACH_CREATE, id);
   },
@@ -453,6 +477,53 @@ const terminalAPI: TerminalAPI = {
     return ipcRenderer.invoke(IPC.PTY_GET_CHILD_PROCESSES, ptyId);
   },
 
+  // ── SSH / Tmux Session Management ─────────────────────────────────
+  sshCreate(opts) {
+    return ipcRenderer.invoke(IPC.SSH_CREATE, opts);
+  },
+  sshWrite(id, data) {
+    ipcRenderer.send(IPC.PTY_WRITE, id, data);
+  },
+  sshResize(id, cols, rows) {
+    return ipcRenderer.invoke(IPC.PTY_RESIZE, id, cols, rows);
+  },
+  sshKill(id) {
+    return ipcRenderer.invoke(IPC.PTY_KILL, id);
+  },
+  onSshReady(cb) {
+    const listener = (_event: Electron.IpcRendererEvent, id: string) => cb(id);
+    ipcRenderer.on(IPC.SSH_READY, listener);
+    return () => ipcRenderer.removeListener(IPC.SSH_READY, listener);
+  },
+  onSshError(cb) {
+    const listener = (_event: Electron.IpcRendererEvent, id: string, err: string) => cb(id, err);
+    ipcRenderer.on(IPC.SSH_ERROR, listener);
+    return () => ipcRenderer.removeListener(IPC.SSH_ERROR, listener);
+  },
+  hostsGet() {
+    return ipcRenderer.invoke(IPC.HOSTS_GET);
+  },
+  hostCreate(data) {
+    return ipcRenderer.invoke(IPC.HOST_CREATE, data);
+  },
+  hostUpdate(id, data) {
+    return ipcRenderer.invoke(IPC.HOST_UPDATE, id, data);
+  },
+  hostDelete(id) {
+    return ipcRenderer.invoke(IPC.HOST_DELETE, id);
+  },
+  tmuxList(hostId) {
+    return ipcRenderer.invoke(IPC.TMUX_LIST, hostId);
+  },
+  tmuxCreate(data) {
+    return ipcRenderer.invoke(IPC.TMUX_CREATE, data);
+  },
+  tmuxDelete(id) {
+    return ipcRenderer.invoke(IPC.TMUX_DELETE, id);
+  },
+  tmuxRename(id, newName) {
+    return ipcRenderer.invoke(IPC.TMUX_RENAME, id, newName);
+  },
 };
 
 contextBridge.exposeInMainWorld('terminalAPI', terminalAPI);

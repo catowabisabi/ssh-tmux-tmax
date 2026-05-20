@@ -113,6 +113,10 @@ export interface TerminalInstance {
   workspaceId?: WorkspaceId;
   wsl?: boolean;
   wslDistro?: string;
+  /** True when this pane is an SSH session (not a local PTY). */
+  isSSH?: boolean;
+  /** The remote host display name for SSH panes. */
+  sshHostName?: string;
 }
 
 export interface TabGroup {

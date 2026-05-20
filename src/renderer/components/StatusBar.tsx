@@ -516,6 +516,13 @@ const StatusBar: React.FC = () => {
           </button>
           <button
             className="status-mode-btn"
+            onClick={() => useTerminalStore.getState().toggleSshPanel()}
+            title="SSH 連線"
+          >
+            &#128279; SSH
+          </button>
+          <button
+            className="status-mode-btn"
             onClick={() => useTerminalStore.getState().toggleWorktreePanel()}
             title="Git Worktrees"
           >

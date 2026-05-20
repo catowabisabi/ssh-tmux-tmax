@@ -2482,6 +2482,7 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ terminalId, floatTitleBar
   // long agent run to remember what was asked.
   const aiSessionId = useTerminalStore((s) => s.terminals.get(terminalId)?.aiSessionId);
   const paneMode = useTerminalStore((s) => s.terminals.get(terminalId)?.mode);
+  const isSSH = useTerminalStore((s) => s.terminals.get(terminalId)?.isSSH);
   const paneCwd = useTerminalStore((s) => s.terminals.get(terminalId)?.cwd);
   // TASK-78: workspaces list for the "Move to workspace" submenu in the
   // overflow menu. paneWorkspaceId is the pane's CURRENT workspace (the one
@@ -2726,6 +2727,14 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ terminalId, floatTitleBar
               title="This pane is floating"
               aria-label="Floating pane"
             >FLOAT</span>
+          )}
+          {isSSH && (
+            <span
+              className="terminal-pane-float-pill"
+              title="SSH 遠端連線"
+              aria-label="SSH pane"
+              style={{ background: 'rgba(137,180,250,0.18)', color: '#89b4fa' }}
+            >SSH</span>
           )}
           {isRenamingPane ? (
             <input

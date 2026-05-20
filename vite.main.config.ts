@@ -7,6 +7,7 @@ export default defineConfig({
         "node-pty",
         "chokidar",
         "better-sqlite3",
+        "ssh2",
       ],
     },
   },

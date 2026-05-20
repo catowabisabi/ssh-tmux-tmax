@@ -1,325 +1,142 @@
 <p align="center">
-  <img src="assets/icon.png" alt="tmax logo" width="128" />
+  <img src="assets/icon.png" alt="Tmux Control Center logo" width="128" />
 </p>
 
-<h1 align="center">tmax</h1>
+<h1 align="center">Tmux Control Center</h1>
 
-<p align="center">A powerful cross-platform multi-terminal app with tiling layouts, floating panels, and a keyboard-driven workflow.</p>
-
-Built with Electron, React, TypeScript, xterm.js, and node-pty.
+<p align="center">A cross-platform terminal manager with SSH remote tmux session management — connect to your servers, attach to tmux sessions, and manage multiple terminals in one window.</p>
 
 ![Windows](https://img.shields.io/badge/Windows-0078D6?logo=windows&logoColor=white) ![macOS](https://img.shields.io/badge/macOS-000000?logo=apple&logoColor=white) ![Linux](https://img.shields.io/badge/Linux-FCC624?logo=linux&logoColor=black) ![Electron](https://img.shields.io/badge/Electron-30-47848F) ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6)
 
-![tmax Screenshot](assets/screenshot.png)
+> **Built on top of [tmax](https://github.com/InbarR/tmax)** — extended with SSH connectivity and remote tmux session management.
+
+---
+
+## What is this?
+
+Tmux Control Center started as a fork of [tmax](https://github.com/InbarR/tmax), a powerful multi-terminal Electron app. The main addition is a built-in **SSH panel** that lets you:
+
+- Save and manage SSH host credentials (password or private key)
+- Define named tmux sessions per host
+- Connect with one click — the app SSHes in and automatically attaches to the tmux session
+- Work in the same tiling terminal UI you're already in, with a blue `SSH` badge marking remote panes
+
+If you work with remote Linux servers and use tmux, this is for you.
+
+---
 
 ## Features
 
+### SSH & Remote tmux (new in this fork)
+
+- **SSH Panel** — open with the `🔗 SSH` button in the status bar, or via Command Palette
+- Add hosts with name, IP/hostname, port, username, and password or SSH key path
+- Define tmux sessions per host (with optional project path)
+- One-click connect — SSHes in and runs `tmux attach-session` automatically
+- Remote panes show a blue `SSH` badge in the title bar
+- Credentials stored locally in a SQLite database
+
+### Terminal Management (from tmax)
+
 **Multiple Terminals in One View**
 - Tiling layout with horizontal/vertical splits (binary tree, like tmux)
-- Floating panels that can be dragged, resized, and maximized; floating panes show a `[FLOAT]` pill in the title bar
-- Float / restore button in every pane title bar (or `Ctrl+Shift+U`)
-- Equalize all panes to the same size with one shortcut
+- Floating panels that can be dragged, resized, and maximized
 - Status indicators per pane (green = active, grey = idle, red = error)
 - Focused pane highlighted with green-tinted title bar
-- Status bar terminal count is clickable - opens a popover listing every terminal with its title, mode, and AI session status; click a row to focus it
-- Floating "jump to bottom" button appears when you scroll up in any pane; click to snap back to the live tail
 
 **Workspaces**
-- A tab is a workspace - each one keeps its own panes, layout, and color tint
-- Drag workspace tabs to reorder; the order persists across restarts
-- Switch workspaces from the workspace tab bar; per-workspace state is saved across restarts
-- Multi-select panes (Ctrl+click / Cmd+click on a pane title bar) to act on several at once - "Show Selected (N)" toolbar button plus Command Palette entries (Show Selected Panes / Show All Panes / Clear Pane Selection)
-- Move a pane to another workspace from the pane ⋯ menu or the Command Palette - PTY, cwd, and scrollback survive the move
-- Per-workspace color tint with a colorize toggle that paints the workspace tab and its pane title bars
-- Focus-mode pane indicator: a row of dots at the bottom of the focused pane shows the pane count and lets you click to switch (Ctrl+Tab still works for power users)
-
-**Grid View Mode**
-- Toggle between Focus (single terminal) and Grid layout (`Ctrl+Shift+F`)
-- Grid auto-arranges terminals: 2x2, 3x2, etc. based on terminal count
-- Cycle grid column count with `Ctrl+Shift+L` (1-col stack, 2-col, 3-col, ...)
-- Fully resizable dividers in grid mode
-
-**Tab Groups**
-- Group related tabs with shared colors and collapsible headers
-- Right-click tab > Add to Group (supports multi-select with Ctrl+click)
-- Group header right-click: Rename, Color picker, Ungroup All, Close All
-- Drag tabs between groups to reorganize
-- Group color tints both tabs and terminal pane backgrounds
+- Each workspace tab keeps its own pane layout and color tint
+- Drag workspace tabs to reorder; state saved across restarts
+- Multi-select panes with Ctrl+click to act on several at once
+- Move panes between workspaces from the pane menu or Command Palette
 
 **AI Sessions Panel**
 - Monitor GitHub Copilot and Claude Code sessions in real-time (`Ctrl+Shift+C`)
-- Shows session status, summary, branch, repo, message/tool counts, and relative time
-- Click a session to resume it directly in a new terminal pane
-- Jump to any previous prompt in the terminal (`Ctrl+Shift+K`)
-- Cross-session prompt search (`Ctrl+Shift+Y`) - search every prompt across every AI session, with `foo AND bar` syntax to require multiple terms. Results stream in progressively, with a jump glyph (↗ for live panes, ↑ for inactive sessions) on each row. Inactive sessions resume in a new pane on click
-- Filter tabs: All / Copilot / Claude Code; sidebar search by name, branch, cwd, or summary (also supports the AND syntax)
-- AI session shimmer: a soft border pulse on any pane whose AI session is waiting for your input, suppressed when you focus the pane. Useful peripheral cue on a multi-monitor setup. Toggle in Settings → Terminal
-- Native AI session notifications when Claude Code or Copilot CLI finishes a turn or asks for approval, with a Settings → Notifications exclude list to silence specific titles or bodies
-- Per-group `+` button on each repo group header spawns a fresh Copilot session in that group's folder - faster than typing the resume command yourself
-- Wake / ping button per session row - writes a no-op so a dormant session refreshes its status
-- SQLite-backed Copilot session loading - reads Copilot CLI's local store directly for ~150ms startup on busy machines
-- Bulk Cleanup sessions - archive everything below a prompt-count threshold (pinned and already-archived sessions are skipped)
-- WSL session discovery — sessions from WSL distros appear with a distro badge
+- Shows session status, summary, branch, repo, message/tool counts
+- Click a session to resume it in a new terminal pane
+- Cross-session prompt search (`Ctrl+Shift+Y`) with `foo AND bar` syntax
 
 **File Explorer**
-- Sidebar file tree for the focused terminal's CWD (`Ctrl+Shift+X`)
-- Breadcrumb path navigation — click any segment to jump, or type a path directly
-- Navigate up, home (terminal CWD), or double-click folders to enter
-- File type icons (TS, JS, JSON, CSS, HTML, MD, PY, and more)
-- Single click to preview file content in a resizable side panel
-- Double click to open in default editor
-- Right-click menu: Preview, Open in Editor, Browse Here, CD Here, Copy Path
-- Filter input (supports `foo AND bar` for multi-token matches), show/hide dotfiles toggle, collapse all button
+- Sidebar file tree for the focused terminal's working directory (`Ctrl+Shift+X`)
+- Single-click file preview, double-click to open in editor
 - WSL filesystem support
 
-**Diff Review**
-- Built-in diff review overlay for code changes
-- File tree with filter search
-- Inline code review with annotations
-
-**Click-to-Preview**
-- Click any `.md` path in terminal output to open an in-app markdown preview - rendered headings, mermaid diagrams, zoom, drag-to-resize, and a Friendly/Raw toggle
-- Click any image path (`.png`, `.jpg`, `.jpeg`, `.gif`, `.bmp`, `.webp`) to open an in-app image viewer with zoom and drag-to-resize. Works for absolute, relative, and bare-basename paths (Copilot CLI's `[basename.png]` shape resolves too)
-- Both previews have an "Open externally" button if you'd rather route to the OS default viewer
-
 **Keyboard-Driven Workflow**
-- Command palette (`Ctrl+Shift+P`) with every action searchable (supports `foo AND bar` token filtering)
-- Jump to any terminal by name (`Ctrl+Shift+G`) - also supports the AND syntax
-- Pane hints for quick terminal switching (`Ctrl+Shift+J`)
-- Rename the focused pane in place with `Ctrl+Shift+R`
-- Refresh / restart the focused pane in place with `Ctrl+Alt+R` - tears down and respawns the PTY, preserving title and cwd
-- `Ctrl+Insert` copies the current selection - third alias alongside `Ctrl+Shift+C` and the right-click menu
-- Undo close pane / workspace (`Ctrl+Shift+T`) - 10-deep stack that restores cwd, title, color, and resumes the AI session if it's still in the live list. Confirms before restoring so an accidental keypress doesn't spawn PTYs unexpectedly
-- Split, move, resize, and navigate — all from the keyboard
-- Every shortcut is fully configurable
-- macOS support: all Ctrl shortcuts work with Cmd, UI shows native symbols (⌘/⌥)
-
-**Modern Tab Bar**
-- Rounded pill-style tabs with subtle borders
-- Hide/show tab bar (`Ctrl+Shift+B`) for maximum screen space
-- Tab colors shown as bottom line indicator
-- Drag & drop to reorder or split
+- Command Palette (`Ctrl+Shift+P`) with every action searchable
+- Jump to any terminal by name (`Ctrl+Shift+G`)
+- Fully configurable keybindings
 
 **Appearance**
+- 12 built-in theme presets (Catppuccin, Tokyo Night, Dracula, Nord, Gruvbox, and more)
+- Windows 11 Mica/Acrylic transparency
 - Font picker with all installed monospace fonts
-- Windows 11 Mica/Acrylic transparency (Appearance tab in Settings)
-- Background material and opacity controls
-- 12 built-in theme presets (8 dark, 4 light) - Catppuccin Mocha/Latte, Warm Dusk, Tokyo Night, Dracula, Nord, Gruvbox Dark, Rosé Pine / Dawn, Solarized Dark/Light, GitHub Light - or hand-pick every color. Switching a preset recolors the whole app, not just the terminal area
-- Dark title bar forced regardless of system theme
-
-**Drag & Drop**
-- Drag tabs to split panes (left/right/top/bottom indicators)
-- Drag to swap terminal positions
-- Drag to detach as floating panel
-- Visual drop zone labels showing exactly where the terminal will land
-- Drop a file (or multiple files) from File Explorer onto a terminal pane to write the path(s) into the prompt
-
-**Session Management**
-- Auto-save/restore on close, crash, or reboot (saves every 5 seconds)
-- Named layouts: save and load terminal arrangements with titles and working directories
-- Startup commands per terminal — restored when loading a layout
-
-**WSL Integration**
-- Discover AI sessions running inside WSL distros
-- Sessions appear with distro badge in the AI Sessions panel
-- Resume WSL sessions in the correct distro and working directory
-- File explorer works with WSL filesystems
-- Terminal CWD tracking translates WSL paths for the Dirs panel
-
-**Configurable Everything**
-- Settings UI (`Ctrl+,`) with tabs for Terminal, Keybindings, Shells, Theme, and Appearance
-- Re-record any keybinding by clicking it
-- Add/remove shell profiles (PowerShell, CMD, WSL, or any executable)
-- Set default start folder globally or per shell
-
-## Tab Context Menu
-
-Right-click any tab for:
-- Rename
-- Split Right / Down
-- Focus / Split Mode
-- Float / Dock / Detach
-- Add to Group / Change Group
-- Tab Color picker
-- Set Startup Command
-- Hide Tab Bar
-- New Terminal (pick shell)
-- Close / Close Others / Close All
-
-## Download
-
-Download the latest version from the [Releases page](https://github.com/InbarR/tmax/releases). Available for Windows (.exe installer + portable .zip), macOS (.dmg for Apple Silicon and Intel), and Linux (.deb, .rpm).
-
-### Troubleshooting Downloads
-
-tmax is an independent open-source project and isn't code-signed (certificates cost $300-600/year on Windows and $99/year on macOS). Your browser and operating system may warn you about the download. All of these warnings are cosmetic - nothing is wrong with the file itself. Here's how to get past each one.
 
 ---
 
-#### 🪟 Windows
-
-**"isn't commonly downloaded" (Edge / Chrome)**
-
-![Edge SmartScreen warning](docs/screenshots/download-warn-edge.png)
-
-Your browser may silently pause the download and show the message above, or quietly stash it as `Unconfirmed *.crdownload` in your Downloads folder:
-
-![Unconfirmed crdownload](docs/screenshots/download-warn-crdownload.png)
-
-This is [Microsoft SmartScreen's reputation filter](https://learn.microsoft.com/en-us/windows/security/operating-system-security/virus-and-threat-protection/microsoft-defender-smartscreen/) - new / niche installers trigger it regardless of content.
-
-To allow the download:
-1. In the download warning, click the **⋯** menu and choose **Keep**. Edge then shows a second dialog:
-
-   ![Edge Keep confirmation](docs/screenshots/download-warn-edge-expanded.png)
-
-2. Click the **dropdown arrow** next to the red **Delete** button and choose **Keep anyway**.
-
-**"Windows protected your PC" on first launch**
-
-After installing, the first time you run tmax you'll see a blue "Windows protected your PC" dialog from SmartScreen. Click **More info** at the top, then **Run anyway** at the bottom.
-
----
-
-#### 🍎 macOS
-
-**"tmax is damaged and can't be opened"**
-
-![macOS damaged warning](docs/screenshots/download-warn-macos.png)
-
-Despite what the dialog says, the app is fine. macOS requires apps to be signed with an Apple Developer certificate ($99/year). Since I'm not planning to pay that evil company 😏, you have to bypass the quarantine flag yourself. Click **Cancel** (not Move to Trash!) and run this in Terminal:
-
-```bash
-xattr -cr /Applications/tmax.app
-```
-
-This clears the quarantine extended attribute so macOS skips the signature check. Open tmax normally afterwards.
-
-If you installed to a different location, adjust the path (e.g. `~/Applications/tmax.app`).
-
----
-
-## Building from Source
+## Getting Started
 
 ### Prerequisites
 
 - Node.js 18+
 - npm
-- **Windows**: [Visual Studio 2022 Build Tools](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022) with "Desktop development with C++" workload (for node-pty native compilation). VS 2025+ is not yet supported by node-gyp — if you only have VS 2025, install the 2022 Build Tools alongside it and set `GYP_MSVS_VERSION=2022` before running `npm install`.
+- **Windows**: [Visual Studio 2022 Build Tools](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022) with "Desktop development with C++" workload
 - **macOS**: Xcode Command Line Tools (`xcode-select --install`)
 - **Linux**: `build-essential`, `python3`, `libx11-dev`, `libxkbfile-dev`
 
 ### Install & Run
 
 ```bash
-git clone https://github.com/InbarR/tmax.git
-cd tmax
+git clone https://github.com/catowabisabi/tmux-control-center.git
+cd tmux-control-center
 npm install
 npm start
 ```
 
-### Build Installer
+### Build
 
 ```bash
 npm run build
 ```
 
-Output per platform:
-- **Windows**: `out/make/squirrel.windows/x64/tmax-<version> Setup.exe`
-- **macOS**: `out/make/*.dmg`
-- **Linux**: `out/make/deb/x64/*.deb` and `out/make/rpm/x64/*.rpm`
-- **All**: portable `.zip`
+---
+
+## How to Use SSH
+
+1. Click the **🔗 SSH** button in the bottom status bar (or open Command Palette → "SSH 連線面板")
+2. Click **＋** to add a host — enter the hostname, port, username, and either a password or path to your private key
+3. Click the host name to see its tmux sessions, then click **＋** to add a session name
+4. Click **連線** — the app will SSH in and attach to the tmux session automatically
+5. The terminal pane opens with a blue `SSH` badge in the title bar
+
+---
 
 ## Architecture
 
 ```
 src/
   main/           Electron main process
-    main.ts                     Window creation, IPC handlers
-    pty-manager.ts              node-pty lifecycle management
-    config-store.ts             electron-store config persistence
-    copilot-session-monitor.ts  Scans ~/.copilot/session-state/
-    copilot-session-watcher.ts  File watcher for Copilot sessions
-    copilot-events-parser.ts    Incremental JSONL parser for Copilot events
-    copilot-notification.ts     Desktop notifications for Copilot
-    claude-code-session-monitor.ts  Scans ~/.claude/projects/
-    claude-code-session-watcher.ts  File watcher for Claude Code sessions
-    claude-code-events-parser.ts    JSONL parser for Claude Code sessions
-    wsl-session-manager.ts      Manages session monitors for WSL distros
-    wsl-utils.ts                WSL distro detection and path translation
-    git-diff-service.ts         Git diff parsing for code review
-    version-checker.ts          Auto-update via GitHub releases
-    diag-logger.ts              Diagnostic logging for debugging
+    main.ts                 Window creation, IPC handlers
+    pty-manager.ts          Local PTY lifecycle (node-pty)
+    ssh-manager.ts          SSH connections (ssh2)
+    tmux-service.ts         Remote tmux commands over SSH
+    db.ts                   SQLite database (hosts, tmux sessions)
+    credential-store.ts     Encrypted credential storage
+    config-store.ts         App config persistence
+    ...                     AI session monitoring, git, file explorer
   preload/        Secure IPC bridge (contextBridge)
   renderer/       React UI
-    state/          Zustand store + binary tree / grid layout engine
-    components/     Terminal, TabBar, TilingLayout, FloatingPanel,
-                    CopilotPanel, FileExplorer, DiffReview,
-                    CommandPalette, Settings, etc.
-    hooks/          Keybindings, drag & drop, PTY helpers
-    utils/          Platform detection (macOS/Windows/Linux)
-    styles/         Global CSS (Catppuccin theme)
-  shared/         IPC channel constants, AI session types, diff types
+    state/          Zustand store + layout engine
+    components/     TerminalPanel, SshPanel, CopilotPanel,
+                    FileExplorer, Settings, CommandPalette, etc.
+    hooks/          Keybindings, drag & drop
+    styles/         Global CSS
+  shared/         IPC channel constants, shared types
 ```
 
-**Key design decisions:**
-- Binary tree layout engine for tmux-style tiling with arbitrary splits
-- Zustand for state management (terminals, layout, focus, config)
-- `@dnd-kit` for structured drag & drop with per-pane drop zones
-- `node-pty` with ConPTY for native Windows terminal emulation
-- `contextIsolation: true` for Electron security
-- Session auto-save every 5s for crash recovery
-- Renderer heartbeat for freeze detection diagnostics
-
-## Configuration
-
-Settings are stored at:
-```
-%APPDATA%/tmax/tmax-config.json
-```
-
-You can edit this file directly or use the Settings UI (`Ctrl+,`).
-
-### AI Session Commands
-
-The commands used to resume Copilot and Claude Code sessions are configurable in **Settings > Terminal**:
-
-| Setting | Default | Description |
-|---------|---------|-------------|
-| Copilot Command | `copilot` | Base command for Copilot sessions |
-| Claude Code Command | `claude` | Base command for Claude Code sessions |
-
-This lets you use custom aliases or wrapper scripts. The configured command is invoked as `<command> --resume <sessionId>`.
-
-## Support & Known Issues
-
-Need help? Open an issue on the [GitHub tracker](https://github.com/InbarR/tmax/issues) - see [CONTRIBUTING.md](CONTRIBUTING.md) for what to include.
-
-### Double-clicking a word in Copilot CLI / Claude Code, then right-clicking, doesn't copy
-
-In **Copilot CLI** (and sometimes **Claude Code**), if you double-click a word to select it and then right-click, tmax pastes whatever was previously on your clipboard instead of copying the highlighted word.
-
-This happens because those tools take over the mouse to power their own UI, so when you double-click, tmax never actually sees a selection to copy from - even though the word looks highlighted on screen.
-
-**What works instead:**
-- **Drag across the text** with the left mouse button (instead of double-clicking), then right-click. This works correctly.
-- **Press `Ctrl+Shift+C`** to copy when you've already made a selection.
-- **Hold `Shift`** while you click or drag - this forces a normal text selection that tmax can copy.
-
-Triple-click line selection has the same limitation. Plain drag-select copy works everywhere.
-
-### Terminal stops accepting keyboard input after switching windows / workspaces
-
-Occasionally after switching apps (Alt+Tab) or workspaces, the focused tmax pane stops registering keystrokes - typing has no effect, and the cursor sometimes appears as a small hollow square pinned to a corner of the pane. This is a DOM-focus issue: another element in the page has stolen keyboard focus from xterm's hidden textarea.
-
-**Reliable fix:** press `Ctrl+Shift+F` twice - that toggles into focus mode and back to grid view, which re-mounts the terminal layout and restores keyboard focus. (Clicking inside the pane content sometimes works, but the focus-toggle is the consistent recovery.)
-
-The original report ([#70](https://github.com/InbarR/tmax/issues/70)) was fixed in v1.6.0; tracking re-occurrence in [#97](https://github.com/InbarR/tmax/issues/97).
-
-## Contributing
-
-Bug reports, feature ideas, and pull requests are very welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on filing issues, opening PRs, code style, and the project management setup.
+---
 
 ## License
 
 MIT
+
+This project is based on [tmax](https://github.com/InbarR/tmax) by [InbarR](https://github.com/InbarR), also licensed under MIT.
