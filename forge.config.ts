@@ -93,7 +93,7 @@ const config: ForgeConfig = {
       // ssh2 is marked external in vite.main.config.ts (native C++ addon for
       // crypto). Without copying it the app throws "Cannot find module 'ssh2'"
       // at runtime when opening any SSH connection.
-      const ssh2Deps = ['ssh2', 'asn1', 'bcrypt-pbkdf', 'cpu-features'];
+      const ssh2Deps = ['ssh2', 'asn1', 'bcrypt-pbkdf', 'safer-buffer', 'tweetnacl', 'cpu-features'];
       for (const dep of ssh2Deps) {
         const depSrc = path.join(__dirname, 'node_modules', dep);
         const depDest = path.join(appDir, 'node_modules', dep);
