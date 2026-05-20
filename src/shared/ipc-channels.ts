@@ -9,15 +9,7 @@ export const IPC = {
   CONFIG_SET: 'config:set',
   SESSION_SAVE: 'session:save',
   SESSION_LOAD: 'session:load',
-  // TASK-71: renderer -> main sync of user-set pane title overrides so OS
-  // notifications can show the same display name the user sees in the pane
-  // title. The map is `Record<string, string>` (sessionId -> displayName).
   SESSION_NAME_OVERRIDES_SYNC: 'session:nameOverridesSync',
-  // TASK-163: main -> renderer broadcast when tmax-session.json changes on
-  // disk (because another tmax window wrote to it). Carries no payload; the
-  // renderer responds by re-reading the file via SESSION_LOAD and merging
-  // just the cross-window-syncable maps (sessionNameOverrides,
-  // sessionLifecycleOverrides, sessionPinned) into its in-memory state.
   SESSION_FILE_CHANGED: 'session:fileChanged',
   CONFIG_OPEN: 'config:open',
   OPEN_PATH: 'shell:openPath',
@@ -55,34 +47,26 @@ export const IPC = {
   IMAGE_READ_DATA_URL: 'image:readDataUrl',
   RESOLVE_CLIPBOARD_BASENAME: 'image:resolveClipboardBasename',
   PTY_GET_DIAG: 'pty:getDiag',
-  // TASK-171: list descendant process names of a PTY's shell pid so the
-  // renderer can detect AI CLIs (copilot/claude/cc) running inside a pane
-  // without text-pattern scanning. One-shot query, not polled.
   PTY_GET_CHILD_PROCESSES: 'pty:getChildProcesses',
   DIAG_LOG: 'diag:log',
   DIAG_GET_LOG_PATH: 'diag:getLogPath',
   DIAG_READ_TAIL: 'diag:readTail',
   GET_SYSTEM_FONTS: 'system:getFonts',
-  // ── Transparency ────────────────────────────────────────────────────
   SET_BACKGROUND_MATERIAL: 'transparency:setMaterial',
   GET_PLATFORM_SUPPORTS_MATERIAL: 'transparency:platformSupports',
-  // ── Diff editor ────────────────────────────────────────────────────
   DIFF_RESOLVE_GIT_ROOT: 'diff:resolveGitRoot',
   DIFF_GET_CODE_CHANGES: 'diff:getCodeChanges',
   DIFF_GET_DIFF: 'diff:getDiff',
   DIFF_GET_ANNOTATED_FILE: 'diff:getAnnotatedFile',
-  // ── File explorer ──────────────────────────────────────────────────
   FILE_LIST: 'file:list',
   FILE_READ: 'file:read',
   FILE_REVEAL: 'file:reveal',
   FILE_RENAME: 'file:rename',
   FILE_DELETE: 'file:delete',
-  // ── Git worktree ────────────────────────────────────────────────────
   GIT_LIST_WORKTREES: 'git:listWorktrees',
   GIT_CREATE_WORKTREE: 'git:createWorktree',
   GIT_DELETE_WORKTREE: 'git:deleteWorktree',
   GIT_GET_BRANCHES: 'git:getBranches',
-  // ── Keybindings file (TASK-39) ─────────────────────────────────────
   KEYBINDINGS_GET: 'keybindings:get',
   KEYBINDINGS_OPEN_FILE: 'keybindings:openFile',
   KEYBINDINGS_RESET: 'keybindings:reset',
@@ -95,6 +79,7 @@ export const IPC = {
   TMUX_CREATE: 'tmux:create',
   TMUX_DELETE: 'tmux:delete',
   TMUX_RENAME: 'tmux:rename',
+  TMUX_SCAN_LIVE: 'tmux:scanLive',
   HOSTS_GET: 'hosts:get',
   HOST_GET: 'host:get',
   HOST_CREATE: 'host:create',

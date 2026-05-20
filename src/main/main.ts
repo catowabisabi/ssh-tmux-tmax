@@ -5,6 +5,8 @@ import path from 'node:path';
 import Store from 'electron-store';
 import { PtyManager } from './pty-manager';
 import { SshManager } from './ssh-manager';
+import { TmuxService } from './tmux-service';
+import { Client } from 'ssh2';
 import { initDb, getHosts, getTmuxSessions, createHost, updateHost, deleteHost, createTmuxSession, updateTmuxSession, deleteTmuxSession } from './db';
 import { encryptPassword, decryptPassword } from './credential-store';
 import { ConfigStore, defaultConfig } from './config-store';
@@ -649,10 +651,6 @@ function registerIpcHandlers(): void {
     const host = hosts.find(h => h.id === opts.hostId);
     if (!host) throw new Error(`Host not found: ${opts.hostId}`);
 
-    const sessions = getTmuxSessions(opts.hostId);
-    const session = sessions.find(s => s.name === opts.sessionName);
-    if (!session) throw new Error(`Session not found: ${opts.sessionName}`);
-
     // Decrypt password if needed
     let password: string | undefined;
     if (host.password_encrypted) {
@@ -667,6 +665,7 @@ function registerIpcHandlers(): void {
       port: host.port,
       username: host.username,
       password,
+      ...(host.private_key_path ? { privateKey: require('node:fs').readFileSync(host.private_key_path) } : {}),
     });
 
     return { id: sessionId };
@@ -784,6 +783,46 @@ function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC.TMUX_RENAME, async (_event, id: number, newName: string) => {
     updateTmuxSession(id, { name: newName });
+  });
+
+  // ── Scan live tmux sessions on a host (temporary SSH exec connection) ────
+  ipcMain.handle(IPC.TMUX_SCAN_LIVE, async (_event, hostId: number) => {
+    const host = getHosts().find(h => h.id === hostId);
+    if (!host) throw new Error(`Host not found: ${hostId}`);
+
+    let password: string | undefined;
+    if (host.password_encrypted) {
+      password = decryptPassword(host.password_encrypted);
+    }
+
+    return new Promise<import('./tmux-service').TmuxLiveSession[]>((resolve, reject) => {
+      const tempClient = new Client();
+      const tmuxSvc = new TmuxService(tempClient);
+
+      tempClient.on('ready', async () => {
+        try {
+          const sessions = await tmuxSvc.listLiveSessions();
+          resolve(sessions);
+        } catch (e) {
+          reject(e);
+        } finally {
+          tempClient.end();
+        }
+      });
+
+      tempClient.on('error', (err) => {
+        reject(err);
+      });
+
+      tempClient.connect({
+        host: host.host,
+        port: host.port,
+        username: host.username,
+        readyTimeout: 15000,
+        ...(password ? { password } : {}),
+        ...(host.private_key_path ? { privateKey: require('node:fs').readFileSync(host.private_key_path) } : {}),
+      });
+    });
   });
 
   ipcMain.on(IPC.DIAG_LOG, (_event, event: string, data?: Record<string, unknown>) => {
@@ -1683,7 +1722,6 @@ app.whenReady().then(() => {
     diagLog('system:unlock-screen');
     console.log('Screen unlocked, stopping keep-alive pings');
     if (lockPingInterval) {
-      clearInterval(lockPingInterval);
       lockPingInterval = null;
     }
     // One final resize to wake everything up

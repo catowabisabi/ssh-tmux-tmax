@@ -101,6 +101,7 @@ export interface TerminalAPI {
   tmuxCreate(data: { hostId: number; name: string; projectPath?: string; autoAttach?: boolean; autoDetachExisting?: boolean }): Promise<{ id: number }>;
   tmuxDelete(id: number): Promise<void>;
   tmuxRename(id: number, newName: string): Promise<void>;
+  tmuxScanLive(hostId: number): Promise<{ name: string; attached: boolean; windows: number; cwd: string }[]>;
 }
 
 const terminalAPI: TerminalAPI = {
@@ -524,6 +525,9 @@ const terminalAPI: TerminalAPI = {
   tmuxRename(id, newName) {
     return ipcRenderer.invoke(IPC.TMUX_RENAME, id, newName);
   },
+  tmuxScanLive(hostId) {
+    return ipcRenderer.invoke(IPC.TMUX_SCAN_LIVE, hostId);
+  },
 };
 
 contextBridge.exposeInMainWorld('terminalAPI', terminalAPI);
@@ -531,6 +535,11 @@ contextBridge.exposeInMainWorld('platformInfo', {
   platform: process.platform,
   homeDir: require('os').homedir(),
   // Main passes --tmax-is-dev=true|false via webPreferences.additionalArguments.
+  // This is authoritative (main has app.isPackaged) where process.defaultApp
+  // can vary depending on how electron is launched.
+  isDev: process.argv.includes('--tmax-is-dev=true'),
+});
+guments.
   // This is authoritative (main has app.isPackaged) where process.defaultApp
   // can vary depending on how electron is launched.
   isDev: process.argv.includes('--tmax-is-dev=true'),
