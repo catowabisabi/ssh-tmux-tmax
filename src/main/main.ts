@@ -225,7 +225,7 @@ function createWindow(): void {
     x: 100,
     y: 100,
     show: false,
-    title: 'tmax',
+    title: 'SSH-TMUX-TMAX',
     icon: path.join(__dirname, '../../assets/icon.png'),
     autoHideMenuBar: true,
     ...constructorOpts,
@@ -1012,7 +1012,7 @@ function registerIpcHandlers(): void {
       width: 800,
       height: 600,
       show: false,
-      title: 'tmax - Terminal',
+      title: 'SSH-TMUX-TMAX - Terminal',
       autoHideMenuBar: true,
       ...detachedConstructorOpts,
       webPreferences: {
@@ -1202,7 +1202,7 @@ function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC.VERSION_GET_CHANGELOG, async () => {
     try {
-      const res = await net.fetch('https://raw.githubusercontent.com/InbarR/tmax/main/CHANGELOG.md');
+      const res = await net.fetch('https://raw.githubusercontent.com/catowabisabi/ssh-tmux-tmax/main/CHANGELOG.md');
       return res.ok ? await res.text() : '';
     } catch {
       return '';
@@ -1573,7 +1573,7 @@ app.whenReady().then(() => {
     // matching it here means installed and dev runs share an identity.
     // No-op on macOS / Linux.
     if (process.platform === 'win32') {
-      try { app.setAppUserModelId('com.squirrel.tmax.tmax'); } catch { /* noop */ }
+      try { app.setAppUserModelId('com.squirrel.ssh-tmux-tmax.ssh-tmux-tmax'); } catch { /* noop */ }
     }
 
     // Purge leftover clipboard temp dirs from crashed/killed sessions

@@ -316,10 +316,11 @@ const SshPanel: React.FC = () => {
                       <span className="ssh-panel-live-meta">{live.windows} window{live.windows !== 1 ? 's' : ''}</span>
                     </div>
                     <div className="ssh-panel-host-actions">
-                      {!savedNames.has(live.name) && (
-                        <button className="ssh-panel-btn-sm" title="加入已儲存清單"
-                          onClick={() => handleAddLiveToSaved(live)}>＋存</button>
-                      )}
+                      <button className="ssh-panel-btn-sm" title={savedNames.has(live.name) ? '已在清單中' : '加入已儲存清單'}
+                        onClick={() => handleAddLiveToSaved(live)}
+                        disabled={savedNames.has(live.name)}>
+                        {savedNames.has(live.name) ? '已存' : '＋存'}
+                      </button>
                       <button className="ssh-panel-btn-sm ssh-panel-btn-connect"
                         onClick={() => handleConnectLive(live)} disabled={connecting === live.name}>
                         {connecting === live.name ? '⋯' : '連線'}
