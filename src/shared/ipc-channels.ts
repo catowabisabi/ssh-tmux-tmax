@@ -80,6 +80,7 @@ export const IPC = {
   TMUX_DELETE: 'tmux:delete',
   TMUX_RENAME: 'tmux:rename',
   TMUX_SCAN_LIVE: 'tmux:scanLive',
+  TMUX_KILL_SESSION: 'tmux:killSession',
   HOSTS_GET: 'hosts:get',
   HOST_GET: 'host:get',
   HOST_CREATE: 'host:create',

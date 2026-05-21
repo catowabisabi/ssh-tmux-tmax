@@ -188,6 +188,16 @@ const SshPanel: React.FC = () => {
     finally { setConnecting(null); }
   }, [selectedHost, createSshTerminal, toggleSshPanel]);
 
+  const handleKillLive = useCallback(async (live: LiveSession) => {
+    if (!selectedHost) return;
+    if (!confirm(`確定要關閉遠端 session「${live.name}」？\n此操作無法復原。`)) return;
+    try {
+      await window.terminalAPI.tmuxKillSession(selectedHost.id, live.name);
+      // refresh live list after kill
+      setLiveSessions((prev) => prev.filter((s) => s.name !== live.name));
+    } catch (e) { setError(`Kill 失敗：${String(e)}`); }
+  }, [selectedHost]);
+
   const handleAddLiveToSaved = useCallback(async (live: LiveSession) => {
     if (!selectedHost) return;
     try { await window.terminalAPI.tmuxCreate({ hostId: selectedHost.id, name: live.name, projectPath: live.cwd !== '~' ? live.cwd : undefined }); }
@@ -324,6 +334,11 @@ const SshPanel: React.FC = () => {
                       <button className="ssh-panel-btn-sm ssh-panel-btn-connect"
                         onClick={() => handleConnectLive(live)} disabled={connecting === live.name}>
                         {connecting === live.name ? '⋯' : '連線'}
+                      </button>
+                      <button className="ssh-panel-btn-sm ssh-panel-btn-danger"
+                        title="關閉此 tmux session"
+                        onClick={() => handleKillLive(live)}>
+                        ✕
                       </button>
                     </div>
                   </li>

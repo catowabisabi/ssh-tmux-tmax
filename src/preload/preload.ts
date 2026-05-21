@@ -528,6 +528,9 @@ const terminalAPI: TerminalAPI = {
   tmuxScanLive(hostId) {
     return ipcRenderer.invoke(IPC.TMUX_SCAN_LIVE, hostId);
   },
+  tmuxKillSession(hostId: number, sessionName: string) {
+    return ipcRenderer.invoke(IPC.TMUX_KILL_SESSION, hostId, sessionName);
+  },
 };
 
 contextBridge.exposeInMainWorld('terminalAPI', terminalAPI);
@@ -535,11 +538,6 @@ contextBridge.exposeInMainWorld('platformInfo', {
   platform: process.platform,
   homeDir: require('os').homedir(),
   // Main passes --tmax-is-dev=true|false via webPreferences.additionalArguments.
-  // This is authoritative (main has app.isPackaged) where process.defaultApp
-  // can vary depending on how electron is launched.
-  isDev: process.argv.includes('--tmax-is-dev=true'),
-});
-guments.
   // This is authoritative (main has app.isPackaged) where process.defaultApp
   // can vary depending on how electron is launched.
   isDev: process.argv.includes('--tmax-is-dev=true'),

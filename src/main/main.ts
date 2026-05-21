@@ -825,6 +825,29 @@ function registerIpcHandlers(): void {
     });
   });
 
+  // Kill a live tmux session on a remote host
+  ipcMain.handle(IPC.TMUX_KILL_SESSION, async (_event, hostId: number, sessionName: string) => {
+    const host = getHosts().find(h => h.id === hostId);
+    if (!host) throw new Error(`Host not found: ${hostId}`);
+    let password: string | undefined;
+    if (host.password_encrypted) password = decryptPassword(host.password_encrypted);
+    return new Promise<void>((resolve, reject) => {
+      const tempClient = new Client();
+      const tmuxSvc = new TmuxService(tempClient);
+      tempClient.on('ready', async () => {
+        try { await tmuxSvc.killSession(sessionName); resolve(); }
+        catch (e) { reject(e); }
+        finally { tempClient.end(); }
+      });
+      tempClient.on('error', (err) => reject(err));
+      tempClient.connect({
+        host: host.host, port: host.port, username: host.username, readyTimeout: 15000,
+        ...(password ? { password } : {}),
+        ...(host.private_key_path ? { privateKey: require('node:fs').readFileSync(host.private_key_path) } : {}),
+      });
+    });
+  });
+
   ipcMain.on(IPC.DIAG_LOG, (_event, event: string, data?: Record<string, unknown>) => {
     diagLog(event, data);
   });

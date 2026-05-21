@@ -138,7 +138,7 @@ const DetachedApp: React.FC<DetachedAppProps> = ({ terminalId }) => {
       });
 
       const titleDisposable = term.onTitleChange((title) => {
-        document.title = `tmax - ${title}`;
+        document.title = `SSH-TMUX-TMAX - ${title}`;
       });
 
       const resizeObserver = new ResizeObserver(() => {
