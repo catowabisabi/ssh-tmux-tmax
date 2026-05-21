@@ -322,6 +322,7 @@ function createWindow(): void {
 
   mainWindow.webContents.on('did-finish-load', () => {
     console.log('Renderer loaded successfully');
+    mainWindow?.setTitle('SSH-TMUX-TMAX');
   });
 
   mainWindow.webContents.on('console-message', (_event, level, message, line, sourceId) => {
