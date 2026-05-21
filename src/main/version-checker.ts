@@ -144,7 +144,7 @@ export class VersionChecker {
       };
       this.broadcastUpdate();
       this.closeFeedServer();
-      this.showNotification('tmax Update Ready', `Version ${version} downloaded. Restart to apply.`, version);
+      this.showNotification('SSH-TMUX-TMAX Update Ready', `Version ${version} downloaded. Restart to apply.`, version);
     });
 
     autoUpdater.on('error', (err: Error) => {
@@ -396,7 +396,7 @@ export class VersionChecker {
           releaseNotes: release.body || undefined,
         };
         this.broadcastUpdate();
-        this.showNotification('tmax Update Available', `Version ${latestClean} is available`, latestClean);
+        this.showNotification('SSH-TMUX-TMAX Update Available', `Version ${latestClean} is available`, latestClean);
         return;
       }
 
@@ -424,7 +424,7 @@ export class VersionChecker {
       };
       this.broadcastUpdate();
       this.showNotification(
-        'tmax Update Downloaded',
+        'SSH-TMUX-TMAX Update Downloaded',
         `Version ${latestClean} downloaded. Click "Restart & Update" to view the package.`,
         latestClean
       );
@@ -478,7 +478,7 @@ export class VersionChecker {
           releaseNotes: release.body || undefined,
         };
         this.broadcastUpdate();
-        this.showNotification('tmax Update Available', `Version ${latestClean} is available (you have ${currentVersion})`, latestClean);
+        this.showNotification('SSH-TMUX-TMAX Update Available', `Version ${latestClean} is available (you have ${currentVersion})`, latestClean);
       }
     } catch {
       // Silently ignore network errors

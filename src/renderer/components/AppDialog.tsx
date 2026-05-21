@@ -128,7 +128,7 @@ const AppDialogHost: React.FC = () => {
       >
         <div className="app-dialog-header">
           <ChevronLogo />
-          <span className="app-dialog-title">{active.title || 'tmax'}</span>
+          <span className="app-dialog-title">{active.title || 'SSH-TMUX-TMAX'}</span>
         </div>
         <div className="app-dialog-message">
           {active.message.split('\n').map((line, i) => (

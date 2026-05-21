@@ -270,7 +270,7 @@ const TerminalSettings: React.FC = () => {
       </SectionGroup>
 
       <SectionGroup title="System">
-        <SettingRow label="Show-window hotkey" description="Global shortcut that restores and focuses tmax from anywhere. Takes effect on next launch.">
+        <SettingRow label="Show-window hotkey" description="Global shortcut that restores and focuses SSH-TMUX-TMAX from anywhere. Takes effect on next launch.">
           <HotkeyCapture
             value={(config as any).showWindowHotkey ?? 'CommandOrControl+Shift+Space'}
             defaultValue="CommandOrControl+Shift+Space"

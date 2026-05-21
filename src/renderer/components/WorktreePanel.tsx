@@ -224,8 +224,8 @@ const WorktreePanel: React.FC = () => {
                       <button
                         className="wt-action-btn"
                         onClick={() => useTerminalStore.getState().openFileExplorerAt(wt.path)}
-                        title="Open in tmax Explorer (toggle)"
-                        aria-label="Open in tmax Explorer"
+                        title="Open in SSH-TMUX-TMAX Explorer (toggle)"
+                        aria-label="Open in SSH-TMUX-TMAX Explorer"
                       >
                         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M2 3h5l1.5 2H14v8H2z" />

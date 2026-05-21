@@ -57,7 +57,7 @@ const EmptyState: React.FC = () => {
     <div className="empty-state">
       <div className="empty-state-hero">
         <ChevronLogo />
-        <div className="empty-state-wordmark">tmax</div>
+        <div className="empty-state-wordmark">SSH-TMUX-TMAX</div>
       </div>
 
       <button

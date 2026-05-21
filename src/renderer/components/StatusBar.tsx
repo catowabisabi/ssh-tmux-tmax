@@ -426,7 +426,7 @@ const StatusBar: React.FC = () => {
     { text: 'Double-click a pane title to rename it.' },
     { text: 'Hover a pane title → ⋯ menu has Float, Detach, Hide, Diff and more.' },
     { text: 'Drag a pane title onto another pane to swap, or to an edge to split.' },
-    { text: 'Paste a URL — tmax unwraps Outlook safelinks automatically.' },
+    { text: 'Paste a URL — SSH-TMUX-TMAX unwraps Outlook safelinks automatically.' },
     { text: 'Click any row of a multi-line URL to open the full link.' },
     { text: 'Hidden a pane and lost the tab bar? The 👁 indicator on the left brings them back.' },
   ], []);
